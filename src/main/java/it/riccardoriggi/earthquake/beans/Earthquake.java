@@ -2,12 +2,22 @@ package it.riccardoriggi.earthquake.beans;
 
 import java.time.LocalDateTime;
 
+import com.mongodb.client.model.geojson.Point;
+
 public class Earthquake {
 
 	private int eventId;
 	private LocalDateTime time;
-	private Double latitude;
-	private Double longitude;
+	private Point coordinates;
+
+	public Point getCoordinates() {
+		return coordinates;
+	}
+
+	public void setCoordinates(Point coordinates) {
+		this.coordinates = coordinates;
+	}
+
 	private Double depth;
 	private String author;
 	private String catalog;
@@ -35,21 +45,7 @@ public class Earthquake {
 		this.time = time;
 	}
 
-	public Double getLatitude() {
-		return latitude;
-	}
 
-	public void setLatitude(Double latitude) {
-		this.latitude = latitude;
-	}
-
-	public Double getLongitude() {
-		return longitude;
-	}
-
-	public void setLongitude(Double longitude) {
-		this.longitude = longitude;
-	}
 
 	public Double getDepth() {
 		return depth;
@@ -133,11 +129,12 @@ public class Earthquake {
 
 	@Override
 	public String toString() {
-		return "Earthquake [eventId=" + eventId + ", time=" + time + ", latitude=" + latitude + ", longitude="
-				+ longitude + ", depth=" + depth + ", author=" + author + ", catalog=" + catalog + ", contributor="
-				+ contributor + ", contributorId=" + contributorId + ", magType=" + magType + ", magnitude=" + magnitude
-				+ ", magAuthor=" + magAuthor + ", eventLocationName=" + eventLocationName + ", eventType=" + eventType
-				+ "]";
+		return "Earthquake [eventId=" + eventId + ", time=" + time + ", coordinates=" + coordinates + ", depth=" + depth
+				+ ", author=" + author + ", catalog=" + catalog + ", contributor=" + contributor + ", contributorId="
+				+ contributorId + ", magType=" + magType + ", magnitude=" + magnitude + ", magAuthor=" + magAuthor
+				+ ", eventLocationName=" + eventLocationName + ", eventType=" + eventType + "]";
 	}
+
+
 
 }

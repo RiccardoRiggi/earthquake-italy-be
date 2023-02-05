@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -20,11 +21,16 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.bson.Document;
+
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
 
 import io.quarkus.logging.Log;
 import it.riccardoriggi.earthquake.beans.Earthquake;
@@ -39,18 +45,10 @@ public class EarthquakeResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("prova")
-	public Response prova() {
-		Object bodyResponse = earthquakeService.prova();
-		return Response.ok(bodyResponse).build();
-	}
-
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
 	@Path("getDataFromINGV")
 	public Response getDataFromINGV() {
 		LocalDate dataInizioIntervallo = LocalDate.of(1985, 1, 1);
-		LocalDate dataFineIntervallo = dataInizioIntervallo.plusDays(30);
+		LocalDate dataFineIntervallo = dataInizioIntervallo.plusDays(15);
 		List<Earthquake> lista = new ArrayList<>();
 		int numeroDiChiamate = 0;
 		while (dataInizioIntervallo.getYear() < 2024) {
@@ -67,8 +65,8 @@ public class EarthquakeResource {
 						+ dataFineIntervallo.format(DateTimeFormatter.ISO_DATE));
 			}
 			numeroDiChiamate++;
-			dataInizioIntervallo = dataInizioIntervallo.plusDays(31);
-			dataFineIntervallo = dataFineIntervallo.plusDays(31);
+			dataInizioIntervallo = dataInizioIntervallo.plusDays(16);
+			dataFineIntervallo = dataFineIntervallo.plusDays(16);
 		}
 		Log.info("Numero di chiamate effettuate: " + numeroDiChiamate);
 		return Response.ok(lista).build();
@@ -80,8 +78,9 @@ public class EarthquakeResource {
 	public Response getDataFromINGVlast() {
 		LocalDate dataInizioIntervallo = LocalDate.now().minusDays(180);
 		LocalDate dataFineIntervallo = LocalDate.now();
+
 		List<Earthquake> lista = new ArrayList<>();
-		int inseriti=0;
+		int inseriti = 0;
 		int falliti = 0;
 		Log.info("Prelevo i dati dal " + dataInizioIntervallo.format(DateTimeFormatter.ISO_DATE) + " al "
 				+ dataFineIntervallo.format(DateTimeFormatter.ISO_DATE));
@@ -100,8 +99,8 @@ public class EarthquakeResource {
 		}
 
 		Log.info("Numero di terremoti trovati: " + lista.size());
-		Log.info("Inseriti: "+inseriti);
-		Log.info("Falliti: "+falliti);
+		Log.info("Inseriti: " + inseriti);
+		Log.info("Falliti: " + falliti);
 		return Response.ok(lista).build();
 	}
 
@@ -150,8 +149,10 @@ public class EarthquakeResource {
 						Earthquake tmp = new Earthquake();
 						tmp.setEventId(Integer.valueOf(split[0]));
 						tmp.setTime(LocalDateTime.parse(split[1], DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-						tmp.setLatitude(Double.valueOf(split[2]));
-						tmp.setLongitude(Double.valueOf(split[3]));
+						Position position = new Position(
+								Arrays.asList(Double.valueOf(split[2]), Double.valueOf(split[3])));
+						Point point = new Point(position);
+						tmp.setCoordinates(point);
 						tmp.setDepth(Double.valueOf(split[4]));
 						tmp.setAuthor(split[5]);
 						tmp.setCatalog(split[6]);
@@ -191,6 +192,30 @@ public class EarthquakeResource {
 		}
 
 		return list;
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/earthquakes")
+	public Response getEarthquaks(@QueryParam("minMagnitude") Double minMagnitude,
+			@QueryParam("startDate") String startDate, @QueryParam("endDate") String endDate,
+			@QueryParam("latitude") Double latitude, @QueryParam("longitude") Double longitude,
+			@QueryParam("distance") Double distance) {
+		Log.info("minMagnitude "+minMagnitude);
+		Log.info("startDate "+startDate);
+		Log.info("endDate "+endDate);
+		Log.info("latitude "+latitude);
+		Log.info("longitude "+longitude);
+		Log.info("distance "+distance);
+		try {
+			List<Document> lista = earthquakeService.getEarthquaks(minMagnitude, startDate, endDate, latitude,
+					longitude, distance);
+			return Response.ok(lista).build();
+		} catch (EarthquakeException e) {
+			Log.error("Errore durante la ricerca dei terremoti: ", e);
+			return Response.serverError().build();
+		}
+
 	}
 
 }
