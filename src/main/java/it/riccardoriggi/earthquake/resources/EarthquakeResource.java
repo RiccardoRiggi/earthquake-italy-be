@@ -132,11 +132,6 @@ public class EarthquakeResource {
 			connection.setRequestProperty("accept", "application/json");
 			InputStream responseStream = connection.getInputStream();
 
-			/*
-			 * String response = new BufferedReader(new InputStreamReader(responseStream,
-			 * StandardCharsets.UTF_8)).lines() .collect(Collectors.joining("\n"));
-			 */
-
 			String line;
 			String[] split;
 			BufferedReader reader = null;
